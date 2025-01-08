@@ -1,0 +1,44 @@
+services:
+  pokemon-pg:
+    image: postgres:16
+    container_name: pokemon-pg
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    ports:
+      - '5432:5432'
+    networks:
+      - custom-network
+  pokemon-redis:
+    image: redis
+    container_name: pokemon-redis
+    ports:
+      - '6379:6379'
+    networks:
+      - custom-network
+  pokemon-api:
+    build:
+      context: .
+    ports:
+      - '3000:3000'
+    environment:
+      - NODE_ENV=prod
+      - PORT=3000
+      - POKEMON_API=https://pokeapi.co/api/v2
+      - DB_HOST=pokemon-pg
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASS=postgres
+      - DB_DATABASE=postgres
+      - REDIS_URL=redis://pokemon-redis:6379
+      - REDIS_TTL=86400
+    networks:
+      - custom-network
+    depends_on:
+      - pokemon-pg
+      - pokemon-redis
+    command: ['npm', 'run', 'start:prod']
+networks:
+  custom-network:
+    driver: bridge
